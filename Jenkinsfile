@@ -75,11 +75,17 @@ pipeline {
        stage("Trivy Scan") {
            steps {
                script {
-	               sh('docker run -v /var/run/docker.sock:/var/run/docker.sock ' +
-                      '-v $HOME/.cache/trivy:/root/.cache ' + // Persistent cache for Trivy database
-                      'aquasec/trivy image suyashmishra19/register-app-pipeline:latest ' +
-                      '--no-progress --scanners vuln --exit-code 0 ' +
-                      '--severity HIGH,CRITICAL --format table --light') // Using --light to skip Java DB
+	               // Ensure cache directory exists and has correct permissions
+                   sh 'mkdir -p $HOME/.cache/trivy && chmod 777 $HOME/.cache/trivy'
+
+                   // Run Trivy scan with fallback retries
+                   retry(3) {  // Retry up to 3 times if there is a download issue
+                       sh('docker run -v /var/run/docker.sock:/var/run/docker.sock ' +
+                          '-v $HOME/.cache/trivy:/root/.cache ' + // Persistent cache for Trivy database
+                          'aquasec/trivy image suyashmishra19/register-app-pipeline:latest ' +
+                          '--no-progress --scanners vuln --exit-code 0 ' +
+                          '--severity HIGH,CRITICAL --format table --light') // Use --light to reduce DB dependencies
+                        }
                     }
                }
            }
