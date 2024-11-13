@@ -33,6 +33,5 @@
 
    <h1> Thank You NovoStack</h1>
    <br>
-   <h1> See You Again. </h1>
    
 </form>
